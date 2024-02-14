@@ -27,4 +27,8 @@ public interface IHotelService extends IService<Hotel> {
      * 获取自动补全结果
      */
     List<String> getSuggestions(String prefix);
+
+    void insetById(Long id);
+
+    void deleteById(Long id);
 }
