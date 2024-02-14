@@ -4,22 +4,25 @@ import cn.itcast.hotel.pojo.HotelDoc;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.HttpHost;
-import org.apache.lucene.search.TotalHits;
-import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +54,60 @@ public class HotelSearchTest {
     void tearDown() throws IOException {
         // 关闭流资源
         this.client.close();
+    }
+
+
+
+    @Test
+    void testSuggest() throws IOException {
+        // 1. 准备Request
+        SearchRequest request = new SearchRequest("hotel");
+        // 2. 准备DSL
+        request.source().suggest(new SuggestBuilder().addSuggestion(
+                "suggestions", // 自动补全的查询名称
+                SuggestBuilders.completionSuggestion("suggestion")
+                        .prefix("ht")
+                        .skipDuplicates(true)
+                        .size(10)
+        ));
+        // 3. 发起请求
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 4. 解析结果
+        Suggest suggest = response.getSuggest();
+        // 4.1 根据自动补全的查询名称获取补全结果
+        CompletionSuggestion suggestion = suggest.getSuggestion("suggestions");
+        // 4.2 获取options
+        List<CompletionSuggestion.Entry.Option> options = suggestion.getOptions();
+        // 4.3 遍历
+        options.forEach(option -> System.out.println(option.getText()));
+
+
+    }
+
+    @Test
+    void testAggregation() throws IOException {
+        // 1. 准备Request
+        SearchRequest request = new SearchRequest("hotel");
+        // 2. 准备DSL
+        // 2.1 设置size
+        request.source().size(0); // 只需要聚合结果，不需要文档
+        // 2.2 聚合
+        request.source().aggregation(AggregationBuilders
+                .terms("brandAgg") // 聚合名称（自定义）
+                .field("brand") // 需要对该字段进行聚合
+                .size(10) // 聚合结果数量
+        );
+        // 3. 发出请求
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 4. 解析结果
+        Aggregations aggregations = response.getAggregations();
+        // 4.1 根据聚合名称获取聚合结果
+        Terms brandTerms = aggregations.get("brandAgg");
+        // 4.2 获取buckets（聚合结果集）
+        List<? extends Terms.Bucket> buckets = brandTerms.getBuckets();
+        // 打印
+        buckets.forEach(bucket -> System.out.println(bucket.getKey()));
+
     }
 
     @Test

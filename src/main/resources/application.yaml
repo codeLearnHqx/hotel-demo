@@ -5,7 +5,7 @@ spring:
     url: jdbc:mysql://localhost:3307/es_demo?useSSL=false
     username: root
     password: 123456
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
 logging:
   level:
     cn.itcast: debug

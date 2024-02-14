@@ -1,13 +1,14 @@
 package cn.itcast.hotel.controller;
 
 import cn.itcast.hotel.pojo.Hotel;
+import cn.itcast.hotel.pojo.PageResult;
+import cn.itcast.hotel.pojo.RequestParams;
 import cn.itcast.hotel.service.IHotelService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Description
@@ -21,11 +22,22 @@ public class HotelController {
     @Resource
     private IHotelService hotelService;
 
-    @GetMapping("/{id}")
-    public Hotel getHotel(@PathVariable Long id) {
-        return hotelService.getById(id);
+
+    @PostMapping("/list")
+    public PageResult search(@RequestBody RequestParams params) {
+        return hotelService.search(params);
     }
 
+    @PostMapping("/filters")
+    public Map<String, List<String>> getFilters(@RequestBody RequestParams params) {
+        Map<String, List<String>> filters = hotelService.filters(params);
+        return filters;
+    }
+
+    @GetMapping("/suggestion")
+    public List<String> getSuggestions(@RequestParam("key") String prefix) {
+        return hotelService.getSuggestions(prefix);
+    }
 
 
 }

@@ -94,6 +94,9 @@ public class HotelDocumentTest {
         client.delete(request, RequestOptions.DEFAULT);
     }
 
+    /**
+     * 从数据库中批量导入数据到ES
+     */
     @Test
     void testBulkRequest() throws IOException {
         // 批量查询酒店数据
